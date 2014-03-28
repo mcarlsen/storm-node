@@ -1,4 +1,5 @@
 {
-"name" : "storm-node",
-"main": "./lib/index.js"
+  "name" : "storm-node",
+  "version": "0.1.0",
+  "main": "./lib/index.js"
 }
