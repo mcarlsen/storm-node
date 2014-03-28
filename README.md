@@ -1,7 +1,10 @@
 # storm-node
 
 Simple implementation of [storm-multilang protocol](https://github.com/nathanmarz/storm/wiki/Multilang-protocol)
-for nodeJS apps. Reads tuples from stdin, emits from stdout, and handles basic handshaking.
+for nodeJS apps. Handles reading, emitting, acking, failing, and handshaking.
+
+At this time, Bolts and Spouts listen to `process.stdin` and write to `process.stdout`; they are meant to be run
+as standalone processes. To override this, change the `input` and `output` properties on your Bolt or Spout.
 
 ## Example
 
@@ -34,9 +37,6 @@ SplitSentenceBolt.prototype.process = function(tuple) {
     this.emit([words[i]]);
   }
 };
-
-// Usually you would export here.
-// module.exports = SplitSentenceBolt();
 
 var ssb = new SplitSentenceBolt();
 
