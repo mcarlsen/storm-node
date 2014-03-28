@@ -27,10 +27,6 @@ SplitSentenceBolt.prototype.process = function(tuple) {
   }
 };
 
-// Usually you would export here.
-// module.exports = SplitSentenceBolt();
-
 var ssb = new SplitSentenceBolt();
-
 // `run()` will start listening for messages via stdin.
 ssb.run();

@@ -13,5 +13,4 @@ TestBolt.prototype.process = function(tuple, done) {
 };
 
 var bolt = new TestBolt();
-
 bolt.run();

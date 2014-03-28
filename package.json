@@ -1,5 +1,11 @@
 {
-  "name" : "storm-node",
+  "name": "storm-node",
   "version": "0.1.0",
-  "main": "./lib/index.js"
+  "main": "./lib/index.js",
+  "devDependencies": {
+    "mocha": "^1.18.2"
+  },
+  "scripts": {
+    "test": "mocha"
+  }
 }
