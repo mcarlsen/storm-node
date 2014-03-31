@@ -20,6 +20,17 @@ var handshakeMsg = {
   "pidDir": "pids"
 };
 
+var testInput = [
+  {
+    id: 0,
+    tuple: ['This sentence should be split']
+  },
+  {
+    id: 1,
+    tuple: ['and so should this.']
+  }
+];
+
 describe('Basic splitSentenceBolt tests' , function() {
 
   var ssb;
@@ -32,6 +43,9 @@ describe('Basic splitSentenceBolt tests' , function() {
         stdio: 'pipe'
       }
     );
+
+    // Ensure we can see errors coming out of this for debugging.
+    ssb.stderr.pipe(process.stdout);
 
     // Expect a pid msg
     ssb.stdout.once('data', function(data) {
@@ -49,64 +63,52 @@ describe('Basic splitSentenceBolt tests' , function() {
 
   it('Should split sentences', function(done) {
 
-    var input = [
-      {
-        id: 0,
-        tuple: ['This sentence should be split']
-      },
-      {
-        id: 1,
-        tuple: ['and so should this.']
-      }
-    ];
-
+    // Setup listener on bolt stdout.
     var index = 0;
-    var splitWords = Array.prototype.concat.apply([], input.map(function(msg){ return msg.tuple[0].split(' '); }));
+    var splitWords = Array.prototype.concat.apply([], testInput.map(function(msg){ return msg.tuple[0].split(' '); }));
+    var ackSent = false;
     ssb.stdout.on('data', function(data) {
       data = parseMessage(data);
 
       // For each messages that comes through, check it.
       data.forEach(function(datum){
+
         if (datum.command === 'emit') {
+          // Verify word is correct.
           assert.equal(datum.tuple[0], splitWords[index], "Output tuple correctly contains a split sentence.");
-        } else if (datum.command === 'ack') {
+          // Verify anchors are properly set.
+          assert.equal(datum.anchors[0], (index > 4 ? 1 : 0));
+          if (++index === splitWords.length) finish();
+        } 
+
+        else if (datum.command === 'ack') {
+          // Ensure an ack was sent at some point.
           assert(datum.id === 0 || datum.id === 1);
-        } else {
+          ackSent = true;
+        } 
+
+        else {
           throw new Error("Bolt threw an unexpected message: " + JSON.stringify(datum));
         }
-        if (++index === splitWords.length) done();
       });
     });
 
-    input.forEach(function(msg) {
+    // Send input down to the bolt.
+    testInput.forEach(function(msg) {
       ssb.stdin.write(JSON.stringify(msg) + "\nend\n");
     });
+
+    function finish() {
+      assert(ackSent);
+      done();
+    }
 
   });
 });
 
 
-var msgs = [];
 function parseMessage(msg) {
-  var out = [];
-  var chunks = msg.toString().split("\n");
-  var last_end = 0;
-
-  msgs = msgs.concat(chunks);
-
-  msgs = msgs.filter(function(msg) {
-    return !!msg;
-  });
-
-  for (var i in msgs) {
-    if (msgs[i] == "end") {
-      out.push(msgs.slice(last_end, i).join("\n"));
-      last_end = parseInt(i) + 1;
-    }
-  }
-
-  msgs.splice(0, last_end);
-
-  return out.map(JSON.parse);
+  var msgs = require('../lib/index').Storm.prototype._readMessage(msg.toString());
+  return msgs.map(JSON.parse);
 }
 

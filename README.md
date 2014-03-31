@@ -8,6 +8,31 @@ as standalone processes. To override this, change the `input` and `output` prope
 
 ## Example
 
+### Basic Bolt with automatic ack and anchoring
+
+```javascript
+'use strict';
+var util = require('util');
+var Storm = require('storm-node');
+
+var TestBolt = function() {
+  // Put any init code here.
+};
+// Inherit BasicBolt for automatic ack & anchoring.
+util.inherits(TestBolt, Storm.BasicBolt);
+
+TestBolt.prototype.process = function(tuple, done) {
+  this.emit(["val1","val2"]);
+  // `done` must be called to ack.
+  done();
+};
+
+var bolt = new TestBolt();
+bolt.run();
+```
+
+### Raw Bolt usage
+
 ```javascript
 'use strict';
 var util = require('util');
@@ -32,10 +57,18 @@ SplitSentenceBolt.prototype.process = function(tuple) {
   // Configuration is also available via `this.stormConfig`
   var words = tuple.tuple[0].split(" ");
 
+  // Optionally, you can anchor this tuple. Emits sent after this line
+  // will automatically have their `anchors` attribute set.
+  this.anchoringTuple = tuple;
+
   for(var i = 0; i < words.length; i++)
   {
     this.emit([words[i]]);
   }
+  // In a subclass of Storm.Bolt, `ack` must be called manually.
+  this.ack(tuple);
+  // Or fail.
+  // this.fail(tuple);
 };
 
 var ssb = new SplitSentenceBolt();
@@ -68,14 +101,9 @@ module.exports = {
 }
 ```
 
-## Known Issues
-
-*  Issue with BasicBolt using anchored emits
-
 ## TODO
 
-* Add anchored emit example
-* Add test suite
+* Implement Spouts
 
 ## Author
 
