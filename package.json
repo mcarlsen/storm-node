@@ -2,6 +2,11 @@
   "name": "storm-node",
   "version": "0.1.0",
   "main": "./lib/index.js",
+  "author": "Bryan Peterson",
+  "contributors": [
+    "Samuel Reed",
+    "Jen Andre"
+  ],
   "devDependencies": {
     "mocha": "^1.18.2",
     "precommit-hook": "^0.3.10"
