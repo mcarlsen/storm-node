@@ -21,8 +21,12 @@ var TestBolt = function() {
 // Inherit BasicBolt for automatic ack & anchoring.
 util.inherits(TestBolt, Storm.BasicBolt);
 
-TestBolt.prototype.process = function(tuple, done) {
-  this.emit(["val1","val2"]);
+// BasicBolt's `process` method is fed an 'emit' function that
+// *must* be used instead of `this.emit`. If you use `this.emit` directly,
+// anchoring will not occur.
+TestBolt.prototype.process = function(tuple, emit, done) {
+  // Use provided `emit` function for automatic anchoring.
+  emit(["val1","val2"]);
   // `done` must be called to ack.
   done();
 };
@@ -57,14 +61,14 @@ SplitSentenceBolt.prototype.process = function(tuple) {
   // Configuration is also available via `this.stormConfig`
   var words = tuple.tuple[0].split(" ");
 
-  // Optionally, you can anchor this tuple. Emits sent after this line
-  // will automatically have their `anchors` attribute set.
-  this.anchoringTuple = tuple;
-
   for(var i = 0; i < words.length; i++)
   {
-    this.emit([words[i]]);
+    // Pass the incoming `tuple` as the first argument to anchor this emit.
+    this.emit(tuple, [words[i]]);
+    // Or, without anchoring:
+    // this.emit([words[i]]);
   }
+
   // In a subclass of Storm.Bolt, `ack` must be called manually.
   this.ack(tuple);
   // Or fail.
@@ -79,22 +83,22 @@ ssb.run();
 
 ## Notes
 
-`storm-node` exports four objects: 
+`storm-node` exports four objects:
 
 ```javascript
 module.exports = {
-  // Internal Communication library shared between Bolts and Spouts. 
+  // Internal Communication library shared between Bolts and Spouts.
   // You usually don't need to use this.
-  Storm: Storm, 
-    
+  Storm: Storm,
+
   // A raw bolt. Similar to storm.Bolt in Java.
   // You need to manually ack when using this;
   // good for Bolts that emit more than once.
-  Bolt: Bolt    
+  Bolt: Bolt
 
   // Similar to storm.BasicBolt. Automatically
   // acks on callback.
-  BasicBolt: BasicBolt, 
+  BasicBolt: BasicBolt,
 
   // WIP.
   Spout: Spout

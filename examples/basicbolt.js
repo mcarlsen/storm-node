@@ -8,8 +8,8 @@ var TestBolt = function() {
 // Inherit BasicBolt for automatic ack & anchoring.
 util.inherits(TestBolt, Storm.BasicBolt);
 
-TestBolt.prototype.process = function(tuple, done) {
-  this.emit(["val1","val2"]);
+TestBolt.prototype.process = function(tuple, emit, done) {
+  emit(["val1","val2"]);
   // `done` must be called to ack.
   done();
 };
